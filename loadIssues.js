@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let allIssues = [];
   let currentTab = "all";
+  let searchQuery = "";
 
   const setLoading = (on = true) => {
     if (on) {
@@ -40,41 +41,6 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("errorMessage").textContent = "Failed to load issues.";
     }
   };
-
-  const openModal = (issue) => {
-    document.getElementById("modalTitle").textContent = issue.title;
-
-    const statusBadge = document.getElementById("modalStatusBadge");
-    statusBadge.textContent = issue.status === "open" ? "Opened" : "Closed";
-    statusBadge.className = `inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white ${issue.status === "open" ? "bg-[#00A96E]" : "bg-[#A855F7]"}`;
-
-    document.getElementById("modalAuthor").textContent = issue.author;
-    document.getElementById("modalDate").textContent = formatDate(issue.createdAt);
-
-    const labelsContainer = document.getElementById("modalLabels");
-    labelsContainer.innerHTML = (issue.labels || []).map(label => {
-      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${getLabelColorText(label)} uppercase tracking-wider">
-                ${label}
-            </span>`;
-    }).join("");
-
-    document.getElementById("modalDescription").textContent = issue.description;
-    document.getElementById("modalAssignee").textContent = issue.assignee || "Unassigned";
-
-    const priorityBadge = document.getElementById("modalPriority");
-    priorityBadge.textContent = issue.priority.toUpperCase();
-    priorityBadge.className = `inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold text-white tracking-wider ${getPriorityColor(issue.priority)}`;
-
-    issueModal.classList.remove("hidden");
-  };
-
-  const closeModal = () => {
-    issueModal.classList.add("hidden");
-  };
-
-  modalBackdrop.addEventListener("click", closeModal);
-  closeModalBtn.addEventListener("click", closeModal);
-
   const getPriorityColor = (priority) => {
     if (priority.toLowerCase() === "high") return "bg-red-500";
     if (priority.toLowerCase() === "medium") return "bg-orange-400";
@@ -104,6 +70,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const renderIssues = () => {
     setLoading(false);
     const filteredIssues = allIssues.filter(issue => {
+      // Search Filter
+      const matchesSearch = searchQuery === "" ||
+        issue.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        issue.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+      if (!matchesSearch) return false;
+
       if (currentTab === "all") return true;
       return issue.status.toLowerCase() === currentTab;
     });
@@ -127,6 +100,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const card = document.createElement("div");
 
       card.className = `bg-white rounded-lg shadow-sm border border-gray-200 ${isOpen ? "border-open" : "border-closed"} p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow`;
+
+      card.dataset.id = issue.id;
 
       const labelsHtml = (issue.labels || []).map(label => {
         return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${getLabelColorText(label)} uppercase tracking-wider">
@@ -158,8 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <span>${formatDate(issue.createdAt)}</span>
                 </div>
             `;
-
-      card.addEventListener("click", () => openModal(issue));
+      
       issueCardsContainer.appendChild(card);
     });
   };
@@ -187,6 +161,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Search Logic
+  const searchInput = document.getElementById("searchInput");
+  const searchBtn = document.getElementById("searchBtn");
+
+  const performSearch = () => {
+    searchQuery = searchInput.value.trim();
+    renderIssues();
+  };
+
+  searchBtn.addEventListener("click", performSearch);
+  searchInput.addEventListener("keyup", (e) => {
+    if (e.key === "Enter") {
+      performSearch();
+    }
+  });
 
   fetchIssues();
 });
