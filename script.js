@@ -1,11 +1,23 @@
+if (sessionStorage.getItem('github_issue_tracker_auth') !== 'true') {
+    window.location.href = './login.html';
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            sessionStorage.removeItem('github_issue_tracker_auth');
+            window.location.href = './login.html';
+        });
+    }
+
     const issueCardsContainer = document.getElementById("issueCardsContainer");
     const issueModal = document.getElementById("issueModal");
     const modalBackdrop = document.getElementById("modalBackdrop");
     const closeModalBtn = document.getElementById("closeModalBtn");
     const modalLoader = document.getElementById("modalLoader");
     const modalContentWrapper = document.getElementById("modalContentWrapper");
-    
+
     const setModalLoading = (on = true) => {
         if (on) {
             modalLoader.classList.remove("hidden");
